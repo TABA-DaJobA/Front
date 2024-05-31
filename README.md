@@ -5,6 +5,6 @@
 
 ### 프로젝트 내 나의 역할 : frontend
 
-React, React-redux, tailwindcss를 이용하여 front 구현
+React, tailwindcss를 이용하여 front 구현
 
 임시 리드미
