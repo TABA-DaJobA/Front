@@ -1,14 +1,28 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../Config';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import useCoverLetterDraft from '../hooks/useCoverLetterDraft';
 
 const Board = () => {
   const user = useSelector(state => state.user.user);
-  const [introName, setIntroName] = useState(''); // 백엔드의 introName 변수와 일치
-  const [introContent, setIntroContent] = useState(''); // 백엔드의 introContent 변수와 일치
-  const [desireField, setDesireField] = useState(''); // 백엔드의 desireFiled 변수와 일치
+  if (user?.userid == null) return <p role="alert">로그인 후 자기소개서를 작성해 주세요.</p>;
+  return <CoverLetterForm key={user.userid} userId={user.userid} />;
+};
+
+const CoverLetterForm = ({ userId }) => {
+  const draft = useCoverLetterDraft(userId);
+  const { introName, introContent, desireField } = draft.form;
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [savedId, setSavedId] = useState(null);
+  const savingRef = useRef(false);
+  const mounted = useRef(true);
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
   const navigate = useNavigate();
 
   const categoryNames = {
@@ -35,21 +49,24 @@ const Board = () => {
 
   // 직군(희망분야) 드롭다운 변경 핸들러
   const handleJobChange = (event) => {
-    const selectedJobName = event.target.value;
-    // 직군 이름을 사용하여 해당 직군의 ID를 찾음
-    const selectedJobId = Object.keys(categoryNames).find(key => categoryNames[key] === selectedJobName) || "518";
-    setDesireField(selectedJobId);
+    draft.update('desireField', event.target.value);
   };
 
   const handleTitleChange = (event) => {
-    setIntroName(event.target.value); // 백엔드의 introName 변수와 연결
+    draft.update('introName', event.target.value);
   };
 
   const handleTextChange = (event) => {
-    setIntroContent(event.target.value); // 백엔드의 introContent 변수와 연결
+    draft.update('introContent', event.target.value);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (event) => {
+    event.preventDefault();
+    if (savingRef.current || draft.pendingDraft || savedId !== null) return;
+    savingRef.current = true;
+    setSaving(true);
+    setSaveError('');
+    draft.persist();
     try {
       // 데이터를 객체로 묶어서 전송
       const postData = new URLSearchParams({
@@ -59,14 +76,16 @@ const Board = () => {
       });
 
       // Axios를 사용하여 데이터 전송 (userId를 URL에 포함)
-      const response = await axios.post(`${API_BASE_URL}/users/${user.userid}/selfintro`, postData);
-
-      console.log('데이터가 성공적으로 전송되었습니다.', response.data);
-
-      // 백엔드에서 반환된 자기소개서 ID를 이용하여 경로 이동
-      navigate(`/Mycoverletter/${response.data}`);
+      const response = await axios.post(`${API_BASE_URL}/users/${userId}/selfintro`, postData);
+      // A response arriving after navigation must not clear a newer draft.
+      if (!mounted.current) return;
+      setSavedId(response.data);
+      if (draft.complete()) navigate(`/Mycoverletter/${response.data}`);
     } catch (error) {
-      console.error('데이터 전송 중 오류 발생:', error);
+      if (mounted.current) setSaveError('저장하지 못했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.');
+    } finally {
+      savingRef.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
@@ -75,7 +94,19 @@ const Board = () => {
       paddingTop: '190px'
     }}> 
       <div className="mx-auto w-full max-w-[960px]">
-        <form>
+        <p className="mb-3 text-sm text-gray-600">초안은 현재 브라우저에 자동 저장됩니다. 최종 저장은 아래 저장 버튼을 눌러 주세요.</p>
+        {draft.pendingDraft && (
+          <section aria-label="임시 저장한 초안" className="mb-6 rounded-md bg-purple-50 p-4">
+            <p className="mb-3">임시 저장한 자기소개서가 있습니다. 이어서 작성하시겠어요?</p>
+            <button type="button" onClick={draft.restore} className="mr-4 rounded bg-purple-500 px-4 py-2 text-white">이어서 작성</button>
+            <button type="button" onClick={draft.discard} className="rounded border px-4 py-2">초안 삭제하고 새로 작성</button>
+          </section>
+        )}
+        <p role="status" className="mb-3 text-sm text-gray-600">{saving ? '서버에 저장 중…' : draft.message}</p>
+        {saveError && <p role="alert" className="mb-3 text-red-600">{saveError}</p>}
+        {savedId !== null && <button type="button" onClick={() => navigate(`/Mycoverletter/${savedId}`)} className="mb-4 underline">저장한 자기소개서 보기</button>}
+        <form onSubmit={handleSave}>
+          <fieldset disabled={saving || !!draft.pendingDraft || savedId !== null}>
           <div className="mb-6">
             <label htmlFor="desireField" className="mb-3 block text-base font-medium text-[#07074D]">
               직군(희망분야)
@@ -84,11 +115,11 @@ const Board = () => {
               id="desireField"
               name="desireField"
               className="w-full rounded-md border border-[#e0e0e0] bg-white py-3 px-6 text-base font-medium text-[#6B7280] outline-none focus:border-purple-500 focus:shadow-md"
-              value={categoryNames[desireField]}
+              value={desireField}
               onChange={handleJobChange}
             >
               {Object.entries(categoryNames).map(([key, value]) => (
-                <option key={key} value={value}>{value}</option>
+                <option key={key} value={key}>{value}</option>
               ))}
             </select>
           </div>
@@ -125,13 +156,13 @@ const Board = () => {
           </div>
           <div>
             <button
-              type="button" // 버튼을 폼 전송 버튼으로 지정
+              type="submit"
               className="hover:shadow-form rounded-md bg-purple-500 py-3 px-8 text-base font-semibold text-white outline-none"
-              onClick={handleSave}
             >
-              저장
+              {saving ? '저장 중…' : '저장'}
             </button>
           </div>
+          </fieldset>
         </form>
       </div>
     </div>
