@@ -6,11 +6,11 @@
 **기술**　React, JavaScript, Tailwind CSS, React Redux  
 **GitHub**　[TABA-DaJobA/Front](https://github.com/TABA-DaJobA/Front)
 
-### 시스템 구조
+## 시스템 구조
 
 ![다잡아 서비스 아키텍처](dajoba-architecture.png)
 
-### 핵심 기능
+## 핵심 기능
 
 - **채용공고 탐색**: 직군별 필터, 페이지네이션, 공고 상세 조회
 - **자기소개서 관리**: 작성, 조회, 수정, 삭제, 글자 수 표시, 새 자기소개서 초안 저장과 복원
