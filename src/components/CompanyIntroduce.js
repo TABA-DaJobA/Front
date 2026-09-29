@@ -6,12 +6,10 @@ import result from '../assets/결과.png';
 function CompanyIntroduce() {
   return (
     <div className="pb-24">
-      <div className="flex mt-48">
-        <img src={Aiintro}  style={
-            {
-                border: '1px solid gray'
-            }
-        } alt="" className="h-60 mr-24 ml-48 rounded-md" />
+      <div className="flex justify-center items-center mt-52">
+        <img src={Aiintro} style={{
+          border: '1px solid gray'
+        }} alt="" className="h-60 mr-24 ml-24 rounded-md" />
         <div className="flex flex-col justify-center">
           <div className="mb-10 text-xl font-bold">효율적인 AI 시스템!</div>
           <div className="mb-2">
@@ -25,7 +23,7 @@ function CompanyIntroduce() {
           </div>
         </div>
       </div>
-      <div className="flex mt-48">
+      <div className="flex justify-center items-center mt-48 ">
         <div className="flex flex-col justify-center ml-48 mr-32">
           <div className="mb-2 text-xl font-bold">채용의 기회는</div>
           <div className="mb-10 text-xl font-bold">다잡아에서</div>
@@ -40,14 +38,13 @@ function CompanyIntroduce() {
           </div>
         </div>
         <img src={Dajobaintro} style={{
-            border: '1px solid gray'
+          border: '1px solid gray'
         }} alt="" className="h-60 mr-24 ml-24 rounded-md" />
       </div>
-      <div className="flex mt-48">
+      <div className="flex justify-center items-center mt-48">
         <img src={result} style={{
-            border: '1px solid gray'
-            
-        }} alt="" className="h-60 mr-24 ml-48 rounded-md" />
+          border: '1px solid gray'
+        }} alt="" className="h-60 mr-24 ml-24 rounded-md" />
         <div className="flex flex-col justify-center">
           <div className="mb-10 text-xl font-bold">분석결과</div>
           <div className="mb-2">
