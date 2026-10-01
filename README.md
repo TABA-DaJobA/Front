@@ -2,7 +2,7 @@
 
 **AI로 자기소개서를 분석해 크롤링으로 수집한 채용공고와 매칭하는 서비스**
 
-- 담당 역할: 프론트엔드 개발
+- 담당 역할: 프론트엔드
 - 기술: JavaScript, React, Redux Toolkit, React Redux, Redux Persist, Tailwind CSS
 - GitHub: [TABA-DaJobA/Front](https://github.com/TABA-DaJobA/Front)
 
